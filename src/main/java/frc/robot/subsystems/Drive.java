@@ -193,7 +193,8 @@ public class Drive extends SubsystemBase {
 		double[] values = new double[] {
 			//frontLeft.getAnalogIn(),
 			//backLeft.getAnalogIn(),
-			frontRight.getAnalogIn()//,
+			frontRight.getAnalogIn(),//,
+			frontRight.getAnalogVal()
 			//backRight.getAnalogIn()
 		};
 

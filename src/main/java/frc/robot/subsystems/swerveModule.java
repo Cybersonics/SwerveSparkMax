@@ -62,13 +62,15 @@ public class swerveModule extends SubsystemBase {
     //steerPID = new setSwerveModule();
     steerPID = new PIDController(STEER_P, STEER_I, STEER_D);
     steerPID.disableContinuousInput();
+    //steerPID.enableContinuousInput(0, 360);
   }
     
   
   public void setSwerve(double angle, double speed) {
 
     SmartDashboard.putNumber("Incoming Angle", angle);
-    double currentAngle = getAnalogIn() % 360.0;
+    //double currentAngle = getAnalogIn() % 360.0;
+    double currentAngle = getAnalogVal() % 360;
     //steerPID.setAngle(currentAngle);
     SmartDashboard.putNumber("CurAngle", currentAngle);
 	
@@ -136,6 +138,13 @@ public class swerveModule extends SubsystemBase {
     }
     lastEncoderVal = scaledEncoder;
     scaledEncoder += (360 * numTurns);
+    return scaledEncoder;
+  }
+
+  //Using discontinous input 
+  public double getAnalogVal(){
+    double inValRaw = analogIn.pidGet();
+    double scaledEncoder = (inValRaw / RobotController.getVoltage5V()) * 360;
     return scaledEncoder;
   }
   
