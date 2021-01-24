@@ -62,16 +62,13 @@ public class swerveModule extends SubsystemBase {
     //steerPID = new setSwerveModule();
     steerPID = new PIDController(STEER_P, STEER_I, STEER_D);
     steerPID.disableContinuousInput();
-    //steerPID.enableContinuousInput(0, 360);
   }
     
   
   public void setSwerve(double angle, double speed) {
 
     SmartDashboard.putNumber("Incoming Angle", angle);
-    //double currentAngle = getAnalogIn() % 360.0;
     double currentAngle = getAnalogVal() % 360;
-    //steerPID.setAngle(currentAngle);
     SmartDashboard.putNumber("CurAngle", currentAngle);
 	
     /*The angle from the encoder is in the range [0, 360], but the swerve
@@ -110,8 +107,6 @@ public class swerveModule extends SubsystemBase {
     double targetPosition = currentAngle + deltaDegrees;
     SmartDashboard.putNumber("TargetPosition", targetPosition);
 
-    //double steerOutput = steerPID.getOutput(targetPosition);
-    //double steerOutput = steerPID.getOutput(90);
     steerPID.setSetpoint(targetPosition);
     double steerOutput = steerPID.calculate(currentAngle);
     steerOutput = MathUtil.clamp(steerOutput, -1, 1);
@@ -121,13 +116,10 @@ public class swerveModule extends SubsystemBase {
     steerMotor.set(steerOutput);
 
     SmartDashboard.putNumber("currentPosition", currentAngle);
-    //SmartDashboard.putNumber("Setpoint", targetPosition);
-  
   }
 
   public double getAnalogIn() {
     
-    //double rawEncoder = analogIn.getVoltage();
     double test = analogIn.pidGet();
     double scaledEncoder = (test / RobotController.getVoltage5V()) * 360;
     if ((lastEncoderVal % 360) > 270 && (scaledEncoder % 360) < 90) {
