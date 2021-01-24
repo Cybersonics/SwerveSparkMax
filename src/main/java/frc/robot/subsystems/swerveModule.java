@@ -42,6 +42,7 @@ public class swerveModule extends SubsystemBase {
 
   private double lastEncoderVal = 0;
   private double numTurns = 0;
+  private double maxEncoderVolts = 3.3;
 
   public swerveModule(int analogNum, int steerNum, int driveNum, boolean invertDrive, boolean invertSteer) {
 
@@ -57,7 +58,7 @@ public class swerveModule extends SubsystemBase {
 		steerMotor.restoreFactoryDefaults();
     steerMotor.setInverted(invertSteer);
 
-    encoderVal = driveMotor.getAnalog(CANAnalog.AnalogMode.kAbsolute);
+    encoderVal = steerMotor.getAnalog(CANAnalog.AnalogMode.kAbsolute);
 
     //steerPID = new setSwerveModule();
     steerPID = new PIDController(STEER_P, STEER_I, STEER_D);
@@ -70,7 +71,7 @@ public class swerveModule extends SubsystemBase {
 
     SmartDashboard.putNumber("Incoming Angle", angle);
     //double currentAngle = getAnalogIn() % 360.0;
-    double currentAngle = getAnalogVal() % 360;
+    double currentAngle = getAnalog() % 360;
     //steerPID.setAngle(currentAngle);
     SmartDashboard.putNumber("CurAngle", currentAngle);
 	
@@ -181,7 +182,12 @@ public class swerveModule extends SubsystemBase {
   }
 
   public double getAnalog(){
-    return encoderVal.getPosition();
+    double posRaw = encoderVal.getPosition();
+    if (posRaw > maxEncoderVolts) {
+      maxEncoderVolts = posRaw;
+    }
+    double scaledEncoder = (posRaw / maxEncoderVolts) * 360;
+    return scaledEncoder;
   }
 
   public double getVolts(){
