@@ -41,8 +41,8 @@ public class swerveModule extends SubsystemBase {
   private PIDController steerPID;
   private CANPIDController steerCANPID;
 
-  private CANAnalog encoderVal;
-  private CANEncoder motorEncoder;
+  private CANAnalog steerAnalogEncoder;
+  private CANEncoder steerMotorEncoder;
 
   private double lastEncoderVal = 0;
   private double numTurns = 0;
@@ -62,12 +62,12 @@ public class swerveModule extends SubsystemBase {
 		steerMotor.restoreFactoryDefaults();
     steerMotor.setInverted(invertSteer);
 
-    motorEncoder = steerMotor.getEncoder();
+    steerMotorEncoder = steerMotor.getEncoder();
 
-    encoderVal = steerMotor.getAnalog(CANAnalog.AnalogMode.kAbsolute);
+    steerAnalogEncoder = steerMotor.getAnalog(CANAnalog.AnalogMode.kAbsolute);
 
-    steerPID = new PIDController(STEER_P, STEER_I, STEER_D);
-    steerPID.disableContinuousInput();
+    //steerPID = new PIDController(STEER_P, STEER_I, STEER_D);
+    //steerPID.disableContinuousInput();
 
     
     /**
@@ -100,14 +100,14 @@ public class swerveModule extends SubsystemBase {
     steerCANPID.setFF(kFF);
     steerCANPID.setOutputRange(kMinOutput, kMaxOutput);
 
-    motorEncoder.setPosition(getAnalogVal()/20);
+    steerMotorEncoder.setPosition(getAnalogVal()/20);
   }
     
   
   public void setSwerve(double angle, double speed) {
 
     SmartDashboard.putNumber("Incoming Angle", angle);
-    double currentAngle = getMotorEncoder();
+    double currentAngle = getSteerMotorEncoder();
     SmartDashboard.putNumber("CurAngle", currentAngle);
 
     double targetAngle = -angle; //-angle;
@@ -200,7 +200,7 @@ public class swerveModule extends SubsystemBase {
   }
 
   public double getAnalog(){
-    double posRaw = encoderVal.getPosition();
+    double posRaw = steerAnalogEncoder.getPosition();
     if (posRaw > maxEncoderVolts) {
       maxEncoderVolts = posRaw;
     }
@@ -220,11 +220,11 @@ public class swerveModule extends SubsystemBase {
   }
 
   public double getVolts(){
-    return encoderVal.getVoltage();
+    return steerAnalogEncoder.getVoltage();
   }
 
-  public double getMotorEncoder(){
-    double posRaw = motorEncoder.getPosition() * 20;
+  public double getSteerMotorEncoder(){
+    double posRaw = steerMotorEncoder.getPosition() * 20;
     return posRaw;
   }
 
