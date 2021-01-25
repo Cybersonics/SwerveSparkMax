@@ -137,7 +137,6 @@ public class Robot extends TimedRobot {
     //SmartDashboard.putNumber(("RightRear Analog position: "), encoder[3]);
 
     SmartDashboard.putNumber(("RFront Analog Raw"), encoder[1]);
-    SmartDashboard.putNumber("RF Nom Volts", Drive.getNominalVoltage());
     SmartDashboard.putNumber("RF Position", Drive.getRFPosition());
     SmartDashboard.putNumber("RF Volts", Drive.getRFVolts());
     SmartDashboard.putNumber("RF Encoder", Drive.getRFEncoder());

@@ -201,20 +201,16 @@ public class Drive extends SubsystemBase {
 		return values;
 	}
 
-	public static double getNominalVoltage(){
-		return frontRight.nominalVolts();
-	}
-
 	public static double getRFPosition(){
-		return frontRight.getAnalog();
+		return frontRight.getSteerAnalogEncoder();
 	}
 
 	public static double getRFVolts(){
-		return frontRight.getVolts();
+		return frontRight.getAnalogEncoderVolts();
 	}
 
 	public static double getRFEncoder(){
-		return frontRight.getMotorEncoder();
+		return frontRight.getSteerMotorEncoder();
 	}
 
 	public double getNavHeading() {
