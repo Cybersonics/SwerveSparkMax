@@ -213,6 +213,10 @@ public class Drive extends SubsystemBase {
 		return frontRight.getVolts();
 	}
 
+	public static double getRFEncoder(){
+		return frontRight.getMotorEncoder();
+	}
+
 	public double getNavHeading() {
         this.heading = navX.getFusedHeading();
         return heading;

@@ -13,6 +13,9 @@ import com.revrobotics.CANAnalog.AnalogMode;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import com.revrobotics.CANAnalog;
+import com.revrobotics.CANEncoder;
+import com.revrobotics.CANPIDController;
+import com.revrobotics.ControlType;
 
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.RobotController;
@@ -29,16 +32,17 @@ public class swerveModule extends SubsystemBase {
    */
   
   private static final double STEER_P = .0035, STEER_I = 0.00003, STEER_D = 0.0000;
-  //private static final double ENCODER_COUNT_PER_ROTATION = 4096.0;
+  public double kP, kI, kD, kIz, kFF, kMaxOutput, kMinOutput;
   public double currentPosition;
   private AnalogInput analogIn;
   private CANSparkMax steerMotor;
   private CANSparkMax driveMotor;
   private static final double RAMP_RATE = 0.5;
-  //private setSwerveModule steerPID;
   private PIDController steerPID;
+  private CANPIDController steerCANPID;
 
   private CANAnalog encoderVal;
+  private CANEncoder motorEncoder;
 
   private double lastEncoderVal = 0;
   private double numTurns = 0;
@@ -58,29 +62,54 @@ public class swerveModule extends SubsystemBase {
 		steerMotor.restoreFactoryDefaults();
     steerMotor.setInverted(invertSteer);
 
+    motorEncoder = steerMotor.getEncoder();
+
     encoderVal = steerMotor.getAnalog(CANAnalog.AnalogMode.kAbsolute);
 
     steerPID = new PIDController(STEER_P, STEER_I, STEER_D);
     steerPID.disableContinuousInput();
+
+    
+    /**
+     * In order to use PID functionality for a controller, a CANPIDController object
+     * is constructed by calling the getPIDController() method on an existing
+     * CANSparkMax object
+     */
+    steerCANPID = steerMotor.getPIDController();
+        /**
+     * The PID Controller can be configured to use the analog sensor as its feedback
+     * device with the method SetFeedbackDevice() and passing the PID Controller
+     * the CANAnalog object. 
+     */
+    //steerCANPID.setFeedbackDevice(encoderVal);
+
+    // PID coefficients
+    kP = 0.08; 
+    kI = 0.000;
+    kD = 0.0000; 
+    kIz = 0; 
+    kFF = 0; 
+    kMaxOutput = 1; 
+    kMinOutput = -1;
+
+    // set PID coefficients
+    steerCANPID.setP(kP);
+    steerCANPID.setI(kI);
+    steerCANPID.setD(kD);
+    steerCANPID.setIZone(kIz);
+    steerCANPID.setFF(kFF);
+    steerCANPID.setOutputRange(kMinOutput, kMaxOutput);
+
+    motorEncoder.setPosition(getAnalogVal()/20);
   }
     
   
   public void setSwerve(double angle, double speed) {
 
     SmartDashboard.putNumber("Incoming Angle", angle);
-    double currentAngle = getAnalog() % 360;
+    double currentAngle = getMotorEncoder();
     SmartDashboard.putNumber("CurAngle", currentAngle);
-	
-    /*The angle from the encoder is in the range [0, 360], but the swerve
-    computations
-    return angles in the range [-180, 180], so transform the encoder angle to
-    this range*/
 
-    if (currentAngle > 180.0) {
-      currentAngle -= 360.0;
-    }
-    SmartDashboard.putNumber("CurAngle -180 to 180", currentAngle);
-	
     double targetAngle = -angle; //-angle;
     SmartDashboard.putNumber("TargetAngle", targetAngle);
 
@@ -92,7 +121,7 @@ public class swerveModule extends SubsystemBase {
     if (Math.abs(deltaDegrees) > 180.0) {
       deltaDegrees -= 360.0 * Math.signum(deltaDegrees);
     }
-    SmartDashboard.putNumber("DeltaDegCorrected", deltaDegrees);
+
     // If we need to turn more than 90 degrees, we can reverse the wheel direction
     // instead and
     // only rotate by the complement
@@ -107,13 +136,12 @@ public class swerveModule extends SubsystemBase {
     double targetPosition = currentAngle + deltaDegrees;
     SmartDashboard.putNumber("TargetPosition", targetPosition);
 
-    steerPID.setSetpoint(targetPosition);
-    double steerOutput = steerPID.calculate(currentAngle);
-    steerOutput = MathUtil.clamp(steerOutput, -1, 1);
-    SmartDashboard.putNumber("Steer Output", steerOutput);
+    double scaledPosition = (targetPosition / 20);
+    SmartDashboard.putNumber("Steer Output", scaledPosition);
+
 
     driveMotor.set(speed);
-    steerMotor.set(steerOutput);
+    steerCANPID.setReference(scaledPosition, ControlType.kPosition);
 
     SmartDashboard.putNumber("currentPosition", currentAngle);
   }
@@ -177,11 +205,27 @@ public class swerveModule extends SubsystemBase {
       maxEncoderVolts = posRaw;
     }
     double scaledEncoder = (posRaw / maxEncoderVolts) * 360;
+  
+    if ((lastEncoderVal % 360) > 270 && (scaledEncoder % 360) < 90) {
+      numTurns += 1;
+    }
+    if ((lastEncoderVal % 360) < 90 && (scaledEncoder % 360) > 270) {
+      numTurns -= 1;
+    }
+    lastEncoderVal = scaledEncoder;
+    scaledEncoder += (360 * numTurns);
     return scaledEncoder;
+
+
   }
 
   public double getVolts(){
     return encoderVal.getVoltage();
+  }
+
+  public double getMotorEncoder(){
+    double posRaw = motorEncoder.getPosition() * 20;
+    return posRaw;
   }
 
   @Override
