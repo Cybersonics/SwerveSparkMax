@@ -47,6 +47,7 @@ public class swerveModule extends SubsystemBase {
   private double lastEncoderVal = 0;
   private double numTurns = 0;
   private double maxEncoderVolts = 3.3;
+  private static final double STEER_MOTOR_RATIO = 18;
 
   public swerveModule(int analogNum, int steerNum, int driveNum, boolean invertDrive, boolean invertSteer) {
 
@@ -81,7 +82,7 @@ public class swerveModule extends SubsystemBase {
      * device with the method SetFeedbackDevice() and passing the PID Controller
      * the CANAnalog object. 
      */
-    //steerCANPID.setFeedbackDevice(encoderVal);
+    //steerCANPID.setFeedbackDevice(steerAnalogEncoder);
 
     // PID coefficients
     kP = 0.08; 
@@ -100,7 +101,8 @@ public class swerveModule extends SubsystemBase {
     steerCANPID.setFF(kFF);
     steerCANPID.setOutputRange(kMinOutput, kMaxOutput);
 
-    steerMotorEncoder.setPosition(getAnalogVal()/20);
+    //steerMotorEncoder.setPosition(getAnalogVal()/20);
+    setSteerMotorEncoder();
   }
     
   
@@ -187,19 +189,7 @@ public class swerveModule extends SubsystemBase {
     driveMotor.stopMotor();
   }
   
-  public void setSteerSpeed(double speed) {
-    steerMotor.set(speed);
-  }
-  
-  public double getSteerSpeed() {
-    return steerMotor.get();
-  }
-
-  public double nominalVolts(){
-    return steerMotor.getVoltageCompensationNominalVoltage();
-  }
-
-  public double getAnalog(){
+  public double getSteerAnalogEncoder(){
     double posRaw = steerAnalogEncoder.getPosition();
     if (posRaw > maxEncoderVolts) {
       maxEncoderVolts = posRaw;
@@ -215,17 +205,37 @@ public class swerveModule extends SubsystemBase {
     lastEncoderVal = scaledEncoder;
     scaledEncoder += (360 * numTurns);
     return scaledEncoder;
-
-
-  }
-
-  public double getVolts(){
-    return steerAnalogEncoder.getVoltage();
   }
 
   public double getSteerMotorEncoder(){
     double posRaw = steerMotorEncoder.getPosition() * 20;
     return posRaw;
+  }
+
+  public void setSteerMotorEncoder(){
+    double inValRaw = analogIn.pidGet();
+    double scaledEncoder = (inValRaw / RobotController.getVoltage5V()) * STEER_MOTOR_RATIO;
+    steerMotor.getEncoder().setPosition(scaledEncoder);
+  }
+
+  public void setSteerEncoder(double position){
+    steerMotor.getEncoder().setPosition(position);
+  }
+
+  public void setSteerSpeed(double speed) {
+    steerMotor.set(speed);
+  }
+  
+  public double getSteerSpeed() {
+    return steerMotor.get();
+  }
+
+  public void stopSteerMotor(){
+    steerMotor.stopMotor();
+  }
+
+  public double getAnalogEncoderVolts(){
+    return steerAnalogEncoder.getVoltage();
   }
 
   @Override
