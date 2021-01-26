@@ -9,7 +9,6 @@ package frc.robot.subsystems;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import com.revrobotics.CANSparkMax;
-import com.revrobotics.CANAnalog.AnalogMode;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import com.revrobotics.CANAnalog;
@@ -19,7 +18,6 @@ import com.revrobotics.ControlType;
 
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpiutil.math.MathUtil;
 import edu.wpi.first.wpilibj.controller.PIDController;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -31,48 +29,61 @@ public class swerveModule extends SubsystemBase {
    * Creates a new swerveModule.
    */
   
-  private static final double STEER_P = .0035, STEER_I = 0.00003, STEER_D = 0.0000;
-  public double kP, kI, kD, kIz, kFF, kMaxOutput, kMinOutput;
   public double currentPosition;
-  private AnalogInput analogIn;
   private CANSparkMax steerMotor;
   private CANSparkMax driveMotor;
   private static final double RAMP_RATE = 0.5;
-  private PIDController steerPID;
-  private CANPIDController steerCANPID;
 
-  private CANAnalog steerAnalogEncoder;
-  private CANEncoder steerMotorEncoder;
+  //Use the following two line if using PID in RoboRIO
+  private static final double STEER_P = .0035, STEER_I = 0.00003, STEER_D = 0.0000;
+  private PIDController steerPID;
+
+  private AnalogInput analogIn; //Set up analog input for Roborio
+ 
+  //Use the following two line if using PID in Spark Max
+  private CANPIDController steerCANPID;
+  public double kP, kI, kD, kIz, kFF, kMaxOutput, kMinOutput;
+
+  private CANAnalog steerAnalogEncoder; //Set up analog input to Spark Max
+  private CANEncoder steerMotorEncoder; //Set up integrated Steering motor encoder in Spark Max/Neo
+  private CANEncoder driveMotorEncoder; //Set up integrated Drive motor encoder in Spark Max/Neo
 
   private double lastEncoderVal = 0;
   private double numTurns = 0;
   private double maxEncoderVolts = 3.3;
-  private static final double STEER_MOTOR_RATIO = 18;
+  private static final double STEER_MOTOR_RATIO = 18; //Ratio between steering motor and Swerve pivot
 
   public swerveModule(int analogNum, int steerNum, int driveNum, boolean invertDrive, boolean invertSteer) {
 
+    //Create and configure a new Drive motor
     driveMotor = new CANSparkMax(driveNum, MotorType.kBrushless);
 		driveMotor.restoreFactoryDefaults();
 		driveMotor.setInverted(invertDrive);
 		driveMotor.setOpenLoopRampRate(RAMP_RATE);
 		driveMotor.setIdleMode(IdleMode.kBrake);
 
+    //Create and configure an analog input on a roborio port
     analogIn = new AnalogInput(analogNum);
 
+    //Create and configure a new Steering motor
     steerMotor = new CANSparkMax(steerNum, MotorType.kBrushless);
 		steerMotor.restoreFactoryDefaults();
     steerMotor.setInverted(invertSteer);
 
+    //Create the built in motor encoders
     steerMotorEncoder = steerMotor.getEncoder();
+    driveMotorEncoder = driveMotor.getEncoder();
 
+    //Create an analog encoder to read values from Spark Max breakout board
     steerAnalogEncoder = steerMotor.getAnalog(CANAnalog.AnalogMode.kAbsolute);
 
+    //Use the next two lines if using PIDs in RoboRio
     //steerPID = new PIDController(STEER_P, STEER_I, STEER_D);
     //steerPID.disableContinuousInput();
 
     
     /**
-     * In order to use PID functionality for a controller, a CANPIDController object
+     * In order to use PID functionality for a Spark Max controller, a CANPIDController object
      * is constructed by calling the getPIDController() method on an existing
      * CANSparkMax object
      */
@@ -84,7 +95,7 @@ public class swerveModule extends SubsystemBase {
      */
     //steerCANPID.setFeedbackDevice(steerAnalogEncoder);
 
-    // PID coefficients
+    // PID coefficients for a Spark Max
     kP = 0.08; 
     kI = 0.000;
     kD = 0.0000; 
@@ -93,7 +104,7 @@ public class swerveModule extends SubsystemBase {
     kMaxOutput = 1; 
     kMinOutput = -1;
 
-    // set PID coefficients
+    // set PID coefficients into Spark Max
     steerCANPID.setP(kP);
     steerCANPID.setI(kI);
     steerCANPID.setD(kD);
@@ -102,21 +113,16 @@ public class swerveModule extends SubsystemBase {
     steerCANPID.setOutputRange(kMinOutput, kMaxOutput);
 
     //steerMotorEncoder.setPosition(getAnalogVal()/20);
-    setSteerMotorEncoder();
+    // Take a reading from the absolute encoder and preload the built in
+    //motor encoder with the position when the system starts up
+    setSteerMotorEncoder();  
   }
-    
-  
+   
   public void setSwerve(double angle, double speed) {
-
-    SmartDashboard.putNumber("Incoming Angle", angle);
+    
     double currentAngle = getSteerMotorEncoder();
-    SmartDashboard.putNumber("CurAngle", currentAngle);
-
     double targetAngle = -angle; //-angle;
-    SmartDashboard.putNumber("TargetAngle", targetAngle);
-
     double deltaDegrees = targetAngle - currentAngle;
-    SmartDashboard.putNumber("DeltaDegrees", deltaDegrees);
 
     // If we need to turn more than 180 degrees, it's faster to turn in the opposite
     // direction
@@ -127,30 +133,42 @@ public class swerveModule extends SubsystemBase {
     // If we need to turn more than 90 degrees, we can reverse the wheel direction
     // instead and
     // only rotate by the complement
-
     //if (Math.abs(speed) <= MAX_SPEED){
       if (Math.abs(deltaDegrees) > 90.0) {
       	deltaDegrees -= 180.0 * Math.signum(deltaDegrees);
       	speed = -speed;
       }
-	// }
-
-    double targetPosition = currentAngle + deltaDegrees;
-    SmartDashboard.putNumber("TargetPosition", targetPosition);
-
-    double scaledPosition = (targetPosition / 20);
-    SmartDashboard.putNumber("Steer Output", scaledPosition);
-
+	  //}
+    //Add change in position to current position
+    double targetPosition = currentAngle + deltaDegrees; 
+    //Scale the new position to match the motor encoder
+    double scaledPosition = (targetPosition / (360/STEER_MOTOR_RATIO)); 
 
     driveMotor.set(speed);
     steerCANPID.setReference(scaledPosition, ControlType.kPosition);
 
-    SmartDashboard.putNumber("currentPosition", currentAngle);
+    //Use Dashboard items to help debug
+    // SmartDashboard.putNumber("Incoming Angle", angle);
+    // SmartDashboard.putNumber("CurAngle", currentAngle);
+    // SmartDashboard.putNumber("TargetAngle", targetAngle);
+    // SmartDashboard.putNumber("DeltaDegrees", deltaDegrees);
+    // SmartDashboard.putNumber("TargetPosition", targetPosition);
+    // SmartDashboard.putNumber("Steer Output", scaledPosition);
+    // SmartDashboard.putNumber("currentPosition", currentAngle);
   }
 
+  
+  //Get analog reading from Roborio port. Value is nominal 0 to 5 vdc so divide by 
+  //the Roborio bus voltage to get percentage of the range. Multipy the range percentage
+  // by 360 to scale and read in degrees. Take a snap shot of the value and use it 
+  //to establish if the encoder is going past the 360 to 0 transition point.
+  //If the transition is 360 to 0 add 1 to the number of turns.
+  //If the transition is 0 to 360 subtract 1 from the number of turns.
+  //The number of turns is then multiplied by 360 and added to the position
+  //to create a "continuous" encoder
   public double getAnalogIn() {
-    double test = analogIn.pidGet();
-    double scaledEncoder = (test / RobotController.getVoltage5V()) * 360;
+    double inValRaw = analogIn.pidGet();
+    double scaledEncoder = (inValRaw / RobotController.getVoltage5V()) * 360;
     if ((lastEncoderVal % 360) > 270 && (scaledEncoder % 360) < 90) {
       numTurns += 1;
     }
@@ -162,25 +180,32 @@ public class swerveModule extends SubsystemBase {
     return scaledEncoder;
   }
 
-  //Using discontinous input 
+  //Get analog reading from Roborio port. Value is nominal 0 to 5 vdc so divide by 
+  //the Roborio bus voltage to get percentage of the range. Multipy the range percentage
+  // by 360 to scale to read in degrees. This will be a discontinous input encoder 
   public double getAnalogVal(){
     double inValRaw = analogIn.pidGet();
     double scaledEncoder = (inValRaw / RobotController.getVoltage5V()) * 360;
     return scaledEncoder;
   }
   
+  //Get the built in Spark/Neo Drive motor encoder position. Value is in motor revolutions.
   public double getDriveEncoder() {
     return driveMotor.getEncoder().getPosition();
   }
   
+  //Set the position value of the Spark/Neo Drive motor encoder position. Position is in 
+  //motor revolutions.
   public void setDriveEncoder(double position) {
     driveMotor.getEncoder().setPosition(position);
   }
   
+  //Set the drive motor speed from -1 to 1 
   public void setDriveSpeed(double speed) {
     driveMotor.set(speed);
   }
   
+  //Get the drive motor speed.
   public double getDriveSpeed() {
     return driveMotor.get();
   }
@@ -189,6 +214,15 @@ public class swerveModule extends SubsystemBase {
     driveMotor.stopMotor();
   }
   
+  //Get analog reading from Spark Max Break out board. Value is nominal 0 to 3.3 vdc so divide by 
+  //the maxEncoderVolts. Check to see if the input is higher then 3.3 and if so make that
+  //the new maxEncodervolts. This corrects the error from the break out boards. Multipy the range
+  //by 360 to scale and read in degrees. Take a snap shot of the value and use it 
+  //to establish if the encoder is going past the 360 to 0 transition point.
+  //If the transition is 360 to 0 add 1 to the number of turns.
+  //If the transition is 0 to 360 subtract 1 from the number of turns.
+  //The number of turns is then multiplied by 360 and added to the position
+  //to create a "continuous" encoder
   public double getSteerAnalogEncoder(){
     double posRaw = steerAnalogEncoder.getPosition();
     if (posRaw > maxEncoderVolts) {
@@ -207,25 +241,32 @@ public class swerveModule extends SubsystemBase {
     return scaledEncoder;
   }
 
+  //Get the built in steering motor encoder value and scale to read in degrees 
   public double getSteerMotorEncoder(){
-    double posRaw = steerMotorEncoder.getPosition() * 20;
+    double posRaw = steerMotorEncoder.getPosition() * (360/STEER_MOTOR_RATIO);
     return posRaw;
   }
 
+  //Set the position value of the Spark/Neo Steer motor encoder position based on the 
+  //position of absolute encoder connected to the Roborio.
   public void setSteerMotorEncoder(){
     double inValRaw = analogIn.pidGet();
     double scaledEncoder = (inValRaw / RobotController.getVoltage5V()) * STEER_MOTOR_RATIO;
     steerMotor.getEncoder().setPosition(scaledEncoder);
   }
 
+  //Set the position value of the Spark/Neo Steer motor encoder position. The position 
+  //is in motor revlutions.
   public void setSteerEncoder(double position){
     steerMotor.getEncoder().setPosition(position);
   }
 
+  //Set the steer motor speed from -1 to 1 
   public void setSteerSpeed(double speed) {
     steerMotor.set(speed);
   }
   
+  //Get the steer motor speed.
   public double getSteerSpeed() {
     return steerMotor.get();
   }
@@ -234,6 +275,7 @@ public class swerveModule extends SubsystemBase {
     steerMotor.stopMotor();
   }
 
+  //Get the analog reading from Spark Max Break out board measured in volts. 
   public double getAnalogEncoderVolts(){
     return steerAnalogEncoder.getVoltage();
   }
