@@ -47,7 +47,7 @@ public class swerveModule extends SubsystemBase {
   private CANAnalog steerAnalogEncoder; //Set up analog input to Spark Max
   private CANEncoder steerMotorEncoder; //Set up integrated Steering motor encoder in Spark Max/Neo
   private CANEncoder driveMotorEncoder; //Set up integrated Drive motor encoder in Spark Max/Neo
-
+  
   private double lastEncoderVal = 0;
   private double numTurns = 0;
   private double maxEncoderVolts = 3.3;
@@ -74,13 +74,13 @@ public class swerveModule extends SubsystemBase {
     steerMotorEncoder = steerMotor.getEncoder();
     driveMotorEncoder = driveMotor.getEncoder();
 
+
     //Create an analog encoder to read values from Spark Max breakout board
     steerAnalogEncoder = steerMotor.getAnalog(CANAnalog.AnalogMode.kAbsolute);
 
     //Use the next two lines if using PIDs in RoboRio
     //steerPID = new PIDController(STEER_P, STEER_I, STEER_D);
     //steerPID.disableContinuousInput();
-
     
     /**
      * In order to use PID functionality for a Spark Max controller, a CANPIDController object
@@ -94,7 +94,7 @@ public class swerveModule extends SubsystemBase {
      * the CANAnalog object. 
      */
     //steerCANPID.setFeedbackDevice(steerAnalogEncoder);
-
+    
     // PID coefficients for a Spark Max
     kP = 0.08; 
     kI = 0.000;
