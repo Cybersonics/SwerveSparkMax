@@ -18,7 +18,8 @@ import com.revrobotics.ControlType;
 
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.controller.PIDController;
+//import edu.wpi.first.wpilibj.controller.PIDController; //Use for Roborio PID
+//import edu.wpi.first.wpiutil.math.MathUtil; // Use for RoboRio PID
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -35,8 +36,8 @@ public class swerveModule extends SubsystemBase {
   private static final double RAMP_RATE = 0.5;
 
   //Use the following two line if using PID in RoboRIO
-  private static final double STEER_P = .0035, STEER_I = 0.00003, STEER_D = 0.0000;
-  private PIDController steerPID;
+  //private static final double STEER_P = .0035, STEER_I = 0.00003, STEER_D = 0.0000;
+  //private PIDController steerPID;
 
   private AnalogInput analogIn; //Set up analog input for Roborio
  
@@ -78,9 +79,8 @@ public class swerveModule extends SubsystemBase {
     //Create an analog encoder to read values from Spark Max breakout board
     steerAnalogEncoder = steerMotor.getAnalog(CANAnalog.AnalogMode.kAbsolute);
 
-    //Use the next two lines if using PIDs in RoboRio
-    //steerPID = new PIDController(STEER_P, STEER_I, STEER_D);
-    //steerPID.disableContinuousInput();
+    //steerPID = new PIDController(STEER_P, STEER_I, STEER_D); // Use for RoboRio PID
+    //steerPID.disableContinuousInput(); // Use for RoboRio PID
     
     /**
      * In order to use PID functionality for a Spark Max controller, a CANPIDController object
@@ -112,7 +112,6 @@ public class swerveModule extends SubsystemBase {
     steerCANPID.setFF(kFF);
     steerCANPID.setOutputRange(kMinOutput, kMaxOutput);
 
-    //steerMotorEncoder.setPosition(getAnalogVal()/20);
     // Take a reading from the absolute encoder and preload the built in
     //motor encoder with the position when the system starts up
     setSteerMotorEncoder();  
@@ -120,6 +119,7 @@ public class swerveModule extends SubsystemBase {
    
   public void setSwerve(double angle, double speed) {
     
+    //double currentAngle = getAnalogIn() % 360.0; // Use for RoboRio PID
     double currentAngle = getSteerMotorEncoder();
     double targetAngle = -angle; //-angle;
     double deltaDegrees = targetAngle - currentAngle;
@@ -144,8 +144,14 @@ public class swerveModule extends SubsystemBase {
     //Scale the new position to match the motor encoder
     double scaledPosition = (targetPosition / (360/STEER_MOTOR_RATIO)); 
 
+    //steerPID.setSetpoint(targetPosition); // Use for RoboRio PID
+    //double steerOutput = steerPID.calculate(currentAngle); // Use for RoboRio PID
+    //steerOutput = MathUtil.clamp(steerOutput, -1, 1); // Use for RoboRio PID
+
+
     driveMotor.set(speed);
     steerCANPID.setReference(scaledPosition, ControlType.kPosition);
+    //steerMotor.set(steerOutput); // Use for RoboRio PID
 
     //Use Dashboard items to help debug
     // SmartDashboard.putNumber("Incoming Angle", angle);
@@ -155,6 +161,7 @@ public class swerveModule extends SubsystemBase {
     // SmartDashboard.putNumber("TargetPosition", targetPosition);
     // SmartDashboard.putNumber("Steer Output", scaledPosition);
     // SmartDashboard.putNumber("currentPosition", currentAngle);
+    // SmartDashboard.putNumber("Steer Output", steerOutput);
   }
 
   
