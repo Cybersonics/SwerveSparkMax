@@ -9,10 +9,13 @@ package frc.robot.subsystems;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Map;
+import java.util.function.DoubleSupplier;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 //import frc.robot.commands.FieldCentricSwerveDrive;
+import frc.robot.commands.FieldCentricSwerveDrive;
 
 import com.kauailabs.navx.frc.AHRS;
 import edu.wpi.first.wpilibj.SPI;
@@ -33,15 +36,12 @@ public class Drive extends SubsystemBase {
 
 	private static final double WHEEL_BASE_LENGTH = 22; // 28.0;
 	private static final double WHEEL_BASE_WIDTH = 23.5; // 22.0;
-	public static final double ENCODER_COUNT_PER_ROTATION = 4096.0;
-	
+		
 	private static final double WHEEL_DIAMETER = 4.0;
 	// TO DO: Correct equation that uses MAX_SPEED
 	public static final double MAX_SPEED = 0.3; // Max speed is 0 to 1
 	public static final double MAX_REVERSIBLE_SPEED_DIFFERENCE = 0.5 * MAX_SPEED;
 
-	public static final double STEER_DEGREES_PER_COUNT = 360.0 / ENCODER_COUNT_PER_ROTATION;
-	public static final double DRIVE_INCHES_PER_COUNT = (WHEEL_DIAMETER * Math.PI) / (80.0 * 6.63);
 	public static final double DEADZONE = 0.08;
 
 	public static final double OMEGA_SCALE = 1.0 / 30.0;
@@ -50,10 +50,34 @@ public class Drive extends SubsystemBase {
 	private final boolean invertSteer = true;
 
 	private ShuffleboardTab driveTab = Shuffleboard.getTab("DriveTab");
-	private NetworkTableEntry lfSetAngle = driveTab.addPersistent("LF Set Angle", 0).getEntry();
-	private NetworkTableEntry lbSetAngle = driveTab.addPersistent("LB Set Angle", 0).getEntry();
-	private NetworkTableEntry rfSetAngle = driveTab.addPersistent("RF Set Angle", 0).getEntry();
-	private NetworkTableEntry rbSetAngle = driveTab.addPersistent("RB Set Angle", 0).getEntry();
+
+	private NetworkTableEntry lfSetAngle = 
+		driveTab.addPersistent("LF Set Angle", 0).withWidget(BuiltInWidgets.kNumberSlider)
+		.withProperties(Map.of("min",-180, "max", 180, "center", 0))
+		.withPosition(0, 0)
+		.withSize(3, 1)
+		.getEntry();
+
+	private NetworkTableEntry lbSetAngle = 
+		driveTab.addPersistent("LB Set Angle", 0).withWidget(BuiltInWidgets.kNumberSlider)
+		.withProperties(Map.of("min",-180, "max", 180, "center", 0))
+		.withPosition(0, 1)
+		.withSize(3, 1)
+		.getEntry();
+
+	private NetworkTableEntry rfSetAngle = 
+		driveTab.addPersistent("RF Set Angle", 0).withWidget(BuiltInWidgets.kNumberSlider)
+		.withProperties(Map.of("min",-180, "max", 180, "center", 0))
+		.withPosition(4, 0)
+		.withSize(3, 1)
+		.getEntry();
+
+	private NetworkTableEntry rbSetAngle =
+		driveTab.addPersistent("RB Set Angle", 0).withWidget(BuiltInWidgets.kNumberSlider)
+		.withProperties(Map.of("min",-180, "max", 180, "center", 0))
+		.withPosition(4, 1)
+		.withSize(3, 1)
+		.getEntry(); 
 
 	public Drive() {
 		
@@ -70,8 +94,7 @@ public class Drive extends SubsystemBase {
 		// Constants.BR_DRIVE_MOTOR, invertDrive, invertSteer);	
 
 		navX = new AHRS(SPI.Port.kMXP);
-		NetworkTableEntry myBool = 
-		Shuffleboard.getTab("DriveTab").add("test001", false).withWidget(BuiltInWidgets.kToggleSwitch).getEntry();
+		
 	}
 
 	// public void stopFrontLeft() {
@@ -193,8 +216,7 @@ public class Drive extends SubsystemBase {
 		double[] values = new double[] {
 			//frontLeft.getAnalogIn(),
 			//backLeft.getAnalogIn(),
-			frontRight.getAnalogIn(),//,
-			frontRight.getAnalogVal()
+			frontRight.getAnalogIn()//,
 			//backRight.getAnalogIn()
 		};
 

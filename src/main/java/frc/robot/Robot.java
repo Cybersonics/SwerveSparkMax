@@ -9,8 +9,10 @@ package frc.robot;
 
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.shuffleboard.*;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj.XboxController;
+import java.util.function.DoubleSupplier;
 
 import frc.robot.commands.AutoCommand;
 import frc.robot.subsystems.Drive;
@@ -28,6 +30,7 @@ public class Robot extends TimedRobot {
   public static XboxController xBoxController;
   private AutoCommand m_autonomousCommand;
   private RobotContainer m_robotContainer;
+  private ShuffleboardTab driveTab = Shuffleboard.getTab("DriveTab");
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -131,15 +134,10 @@ public class Robot extends TimedRobot {
   public void updateDashBoard() {
 
     final double[] encoder = Drive.getEncoderVal();
-		//SmartDashboard.putNumber(("LeftFront Analog position: "), encoder[0]);
-		//SmartDashboard.putNumber(("LeftRear Analog position: "), encoder[1]);
-		SmartDashboard.putNumber(("RightFront Analog position: "), encoder[0]);
-    //SmartDashboard.putNumber(("RightRear Analog position: "), encoder[3]);
-
-    SmartDashboard.putNumber(("RFront Analog Raw"), encoder[1]);
-    SmartDashboard.putNumber("RF Position", Drive.getRFPosition());
-    SmartDashboard.putNumber("RF Volts", Drive.getRFVolts());
-    SmartDashboard.putNumber("RF Encoder", Drive.getRFEncoder());
+		//SmartDashboard.putNumber(("LF Encoder"), encoder[0]);
+		//SmartDashboard.putNumber(("LB Encoder"), encoder[1]);
+		SmartDashboard.putNumber(("RF Encoder"), encoder[0]); //2
+    //SmartDashboard.putNumber(("RB Encoder"), encoder[3]);
 
   }
 }

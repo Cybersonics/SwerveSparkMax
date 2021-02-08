@@ -22,6 +22,8 @@ import edu.wpi.first.wpilibj.RobotController;
 //import edu.wpi.first.wpiutil.math.MathUtil; // Use for RoboRio PID
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.wpilibj.shuffleboard.*;
 
 //import frc.robot.subsystems.setSwerveModule;
 
@@ -53,6 +55,9 @@ public class swerveModule extends SubsystemBase {
   private double numTurns = 0;
   private double maxEncoderVolts = 3.3;
   private static final double STEER_MOTOR_RATIO = 18; //Ratio between steering motor and Swerve pivot
+
+  private double loopCounter = 0;
+  private static final double MAXSTEERERROR = 5;
 
   public swerveModule(int analogNum, int steerNum, int driveNum, boolean invertDrive, boolean invertSteer) {
 
@@ -88,7 +93,8 @@ public class swerveModule extends SubsystemBase {
      * CANSparkMax object
      */
     steerCANPID = steerMotor.getPIDController();
-        /**
+
+    /**
      * The PID Controller can be configured to use the analog sensor as its feedback
      * device with the method SetFeedbackDevice() and passing the PID Controller
      * the CANAnalog object. 
@@ -250,7 +256,22 @@ public class swerveModule extends SubsystemBase {
 
   //Get the built in steering motor encoder value and scale to read in degrees 
   public double getSteerMotorEncoder(){
-    double posRaw = steerMotorEncoder.getPosition() * (360/STEER_MOTOR_RATIO);
+    double posRaw = steerMotorEncoder.getPosition() * (360/STEER_MOTOR_RATIO); //steer motor encoder in degrees
+    //double scaledAnalog = getSteerAnalogEncoder();// analog in from Spark Max Breakout board in degrees
+    double scaledAnalog = getAnalogIn(); //analog in from Roborio in degrees
+    //Periodic check to see if motor encoder aligns with analog encoder
+    if (loopCounter <= 10) {
+      loopCounter =+ 1;
+    }
+    else {
+      loopCounter = 0;
+      //If motor position is not within limits reset the motor encoder
+      if ((posRaw > (scaledAnalog + MAXSTEERERROR)) || 
+        (posRaw < (scaledAnalog - MAXSTEERERROR))) {
+        steerMotor.getEncoder().setPosition(scaledAnalog);
+        posRaw = scaledAnalog;
+      }
+    }
     return posRaw;
   }
 
