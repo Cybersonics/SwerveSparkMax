@@ -127,7 +127,7 @@ public class swerveModule extends SubsystemBase {
     
     //double currentAngle = getAnalogIn() % 360.0; // Use for RoboRio PID
     double currentAngle = getSteerMotorEncoder();
-    double targetAngle = -angle; //-angle;
+    double targetAngle = angle; //-angle;
     double deltaDegrees = targetAngle - currentAngle;
 
     // If we need to turn more than 180 degrees, it's faster to turn in the opposite
