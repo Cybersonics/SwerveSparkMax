@@ -57,54 +57,54 @@ public class Drive extends SubsystemBase {
 
 	public Drive() {
 		
-		// frontLeft = new setSwerveModule(Constants.FL_STEER_ENCODER, Constants.FL_STEER_MOTOR, 
-		// Constants.FL_DRIVE_MOTOR, invertDrive, invertSteer);
+		frontLeft = new swerveModule(Constants.FL_STEER_ENCODER, Constants.FL_STEER_MOTOR, 
+		Constants.FL_DRIVE_MOTOR, invertDrive, invertSteer);
 
-		// backLeft = new setSwerveModule(Constants.BL_STEER_ENCODER, Constants.BL_STEER_MOTOR, 
-		// Constants.BL_DRIVE_MOTOR, invertDrive, invertSteer);
+		backLeft = new swerveModule(Constants.BL_STEER_ENCODER, Constants.BL_STEER_MOTOR, 
+		Constants.BL_DRIVE_MOTOR, invertDrive, invertSteer);
 
 		frontRight = new swerveModule(Constants.FR_STEER_ENCODER, Constants.FR_STEER_MOTOR, 
 		Constants.FR_DRIVE_MOTOR, invertDrive, invertSteer);
 
-		// backRight = new setSwerveModule(Constants.BR_STEER_ENCODER, Constants.BR_STEER_MOTOR, 
-		// Constants.BR_DRIVE_MOTOR, invertDrive, invertSteer);	
+		backRight = new swerveModule(Constants.BR_STEER_ENCODER, Constants.BR_STEER_MOTOR, 
+		Constants.BR_DRIVE_MOTOR, invertDrive, invertSteer);	
 
 		navX = new AHRS(SPI.Port.kMXP);
 		NetworkTableEntry myBool = 
 		Shuffleboard.getTab("DriveTab").add("test001", false).withWidget(BuiltInWidgets.kToggleSwitch).getEntry();
 	}
 
-	// public void stopFrontLeft() {
-	// 	frontLeft.stopDriveMotor();
-	// }
+	public void stopFrontLeft() {
+		frontLeft.stopDriveMotor();
+	}
 
-	// public void stopBackLeft() {
-	// 	backLeft.stopDriveMotor();
-	// }
+	public void stopBackLeft() {
+		backLeft.stopDriveMotor();
+	}
 
 	public void stopFrontRight() {
 		frontRight.stopDriveMotor();
 	}
 
-	// public void stopBackRight() {
-	// 	backRight.stopDriveMotor();
-	// }
+	public void stopBackRight() {
+		backRight.stopDriveMotor();
+	}
 
-	// public void setFrontLeft(double speed) {
-	// 	frontLeft.setDriveSpeed(speed);
-	// }
+	public void setFrontLeft(double speed) {
+		frontLeft.setDriveSpeed(speed);
+	}
 
-	// public void setBackLeft(double speed) {
-	// 	backLeft.setDriveSpeed(speed);
-	// }
+	public void setBackLeft(double speed) {
+		backLeft.setDriveSpeed(speed);
+	}
 
 	public void setFrontRight(double speed) {
 		frontRight.setDriveSpeed(speed);
 	}
 
-	// public void setBackRight(double speed) {
-	// 	backRight.setDriveSpeed(speed);
-	// }
+	public void setBackRight(double speed) {
+		backRight.setDriveSpeed(speed);
+	}
 
 	public void swerveDrive(double strafe, double forward, double omega, boolean deadStick) {
 		double omegaL2 = omega * (WHEEL_BASE_LENGTH / 2.0);
@@ -163,21 +163,21 @@ public class Drive extends SubsystemBase {
 
 		if (deadStick){
 
-			//frontLeft.setSteerSpeed(0);
-			//frontLeft.setDriveSpeed(0);
-			//backLeft.setSteerSpeed(0);
-			//backLeft.setDriveSpeed(0);
+			frontLeft.setSteerSpeed(0);
+			frontLeft.setDriveSpeed(0);
+			backLeft.setSteerSpeed(0);
+			backLeft.setDriveSpeed(0);
 			frontRight.setSteerSpeed(0);
 			frontRight.setDriveSpeed(0);
-			//backRight.setSteerSpeed(0);
-			//backRight.setDriveSpeed(0);
+			backRight.setSteerSpeed(0);
+			backRight.setDriveSpeed(0);
 
 		} else {
 			// Set each swerve module, scaling the drive speeds by the maximum speed
-			// frontLeft.setSwerve(angleFL, speedFL / maxSpeed);
-			// backLeft.setSwerve(angleBL, speedBL / maxSpeed);
+			frontLeft.setSwerve(angleFL, speedFL / maxSpeed);
+			backLeft.setSwerve(angleBL, speedBL / maxSpeed);
 			frontRight.setSwerve(angleFR, speedFR / maxSpeed);
-			// backRight.setSwerve(angleBR, speedBR / maxSpeed);
+			backRight.setSwerve(angleBR, speedBR / maxSpeed);
 		}
 	}
 
@@ -191,13 +191,11 @@ public class Drive extends SubsystemBase {
 
 	public static double[] getEncoderVal() {
 		double[] values = new double[] {
-			//frontLeft.getAnalogIn(),
-			//backLeft.getAnalogIn(),
-			frontRight.getAnalogIn(),//,
-			frontRight.getAnalogVal()
-			//backRight.getAnalogIn()
+			frontLeft.getAnalogIn(),
+			backLeft.getAnalogIn(),
+			frontRight.getAnalogIn(),
+			backRight.getAnalogIn()
 		};
-
 		return values;
 	}
 

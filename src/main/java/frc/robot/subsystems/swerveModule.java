@@ -63,13 +63,10 @@ public class swerveModule extends SubsystemBase {
     steerPID = new PIDController(STEER_P, STEER_I, STEER_D);
     steerPID.disableContinuousInput();
   }
-    
   
   public void setSwerve(double angle, double speed) {
 
-    SmartDashboard.putNumber("Incoming Angle", angle);
     double currentAngle = getAnalogVal() % 360;
-    SmartDashboard.putNumber("CurAngle", currentAngle);
 	
     /*The angle from the encoder is in the range [0, 360], but the swerve
     computations
@@ -79,20 +76,16 @@ public class swerveModule extends SubsystemBase {
     if (currentAngle > 180.0) {
       currentAngle -= 360.0;
     }
-    SmartDashboard.putNumber("CurAngle -180 to 180", currentAngle);
 	
     double targetAngle = -angle; //-angle;
-    SmartDashboard.putNumber("TargetAngle", targetAngle);
-
     double deltaDegrees = targetAngle - currentAngle;
-    SmartDashboard.putNumber("DeltaDegrees", deltaDegrees);
 
     // If we need to turn more than 180 degrees, it's faster to turn in the opposite
     // direction
     if (Math.abs(deltaDegrees) > 180.0) {
       deltaDegrees -= 360.0 * Math.signum(deltaDegrees);
     }
-    SmartDashboard.putNumber("DeltaDegCorrected", deltaDegrees);
+
     // If we need to turn more than 90 degrees, we can reverse the wheel direction
     // instead and
     // only rotate by the complement
@@ -105,21 +98,27 @@ public class swerveModule extends SubsystemBase {
 	// }
 
     double targetPosition = currentAngle + deltaDegrees;
-    SmartDashboard.putNumber("TargetPosition", targetPosition);
-
     steerPID.setSetpoint(targetPosition);
     double steerOutput = steerPID.calculate(currentAngle);
     steerOutput = MathUtil.clamp(steerOutput, -1, 1);
-    SmartDashboard.putNumber("Steer Output", steerOutput);
-
+  
     driveMotor.set(speed);
     steerMotor.set(steerOutput);
 
+    /*
+    SmartDashboard.putNumber("Incoming Angle", angle);
+    SmartDashboard.putNumber("CurAngle", currentAngle);
+    SmartDashboard.putNumber("CurAngle -180 to 180", currentAngle);
+    SmartDashboard.putNumber("TargetAngle", targetAngle);
+    SmartDashboard.putNumber("DeltaDegrees", deltaDegrees);
+    SmartDashboard.putNumber("DeltaDegCorrected", deltaDegrees);
+    SmartDashboard.putNumber("TargetPosition", targetPosition);
+    SmartDashboard.putNumber("Steer Output", steerOutput);
     SmartDashboard.putNumber("currentPosition", currentAngle);
+    */
   }
 
   public double getAnalogIn() {
-    
     double test = analogIn.pidGet();
     double scaledEncoder = (test / RobotController.getVoltage5V()) * 360;
     if ((lastEncoderVal % 360) > 270 && (scaledEncoder % 360) < 90) {
